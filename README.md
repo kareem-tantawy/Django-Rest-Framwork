@@ -31,14 +31,14 @@ Each section includes explanations, code snippets, and mini-projects to reinforc
 
 ### 1️⃣ **Clone the Repository**
 ```bash
-git clone https://github.com/yourusername/Django-REST-Framework-Learning.git
-cd Django-REST-Framework-Learning
+git clone https://github.com/kareem-tantawy/Django-REST-Framework.git
+cd Django-REST-Framework
 ```
 
 ### 2️⃣ **Set Up a Virtual Environment**
 ```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: env\Scripts\activate
+python -m venv env
+source env\Scripts\activate
 ```
 
 ### 3️⃣ **Install Dependencies**
