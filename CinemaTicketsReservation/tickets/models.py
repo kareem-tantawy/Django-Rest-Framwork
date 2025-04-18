@@ -7,28 +7,39 @@ class Customer(models.Model):
     phone = models.CharField(max_length=15)
 
     def __str__(self):
-        return f'{self.name}'
+        return f"{self.name}"
+
 
 class Movie(models.Model):
     title = models.CharField(max_length=100)
+
     def __str__(self):
-        return f'{self.title}'
+        return f"{self.title}"
+
 
 class Hall(models.Model):
     name = models.CharField(max_length=100)
     capacity = models.IntegerField()
-    
+    is_in_service = models.BooleanField(default=True)
+
     def __str__(self):
-        return f'{self.name}'
+        return f"{self.name}"
+
+    # def save(self, *args, **kwargs):
+    #     if not self.is_booked:
+    #         self.seat_set.update(is_booked=False)
+    #     super().save(*args, **kwargs)
+        
 
 class Seat(models.Model):
     hall = models.ForeignKey(Hall, on_delete=models.CASCADE)
     row = models.IntegerField()
     number = models.IntegerField()
     is_booked = models.BooleanField(default=False)
-    
+
     def __str__(self):
-        return f'Hall: {self.hall.name}, Row: {self.row}, Seat: {self.number}'
+        return f"Hall: {self.hall.name}, Row: {self.row}, Seat: {self.number}"
+
 
 class Ticket(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
@@ -41,4 +52,4 @@ class Ticket(models.Model):
     booking_date = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f'Ticket for {self.movie.title} on {self.date} at {self.time}'
+        return f"Ticket for {self.movie.title} on {self.date} at {self.time}"

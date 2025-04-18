@@ -17,7 +17,7 @@ class MovieSerializer(serializers.ModelSerializer):
 class HallSerializer(serializers.ModelSerializer):
     class Meta:
         model = Hall
-        fields = ["id", "name", "capacity"]
+        fields = ["id", "name", "capacity", "is_in_service"]
 
 
 class SeatSerializer(serializers.ModelSerializer):
@@ -25,12 +25,19 @@ class SeatSerializer(serializers.ModelSerializer):
         model = Seat
         fields = ["id", "hall", "row", "number", "is_booked"]
 
+    def validate(self, data):
+        hall = data.get("hall") or (self.instance.hall if self.instance else None)
+
+        if hall and not hall.is_in_service:
+            raise serializers.ValidationError(
+                "Cannot add or modify seats in an inactive hall."
+            )
+
+        return data
+
 
 class TicketSerializer(serializers.ModelSerializer):
     customer = CustomerSerializer()
-    hall = HallSerializer()
-    movie = MovieSerializer()
-    seat_number = SeatSerializer()
 
     class Meta:
         model = Ticket
@@ -46,54 +53,46 @@ class TicketSerializer(serializers.ModelSerializer):
             "booking_date",
         ]
 
+    def validate(self, data):
+        hall = data.get("hall")
+        seat = data.get("seat_number")
+
+        if not hall:
+            raise serializers.ValidationError("Hall is required.")
+
+        if not hall.is_in_service:
+            raise serializers.ValidationError(
+                "Sorry! this hall is currently out of service, try another hall"
+            )
+
+        if not seat:
+            raise serializers.ValidationError("Seat number is required.")
+
+        if seat.hall != hall:
+            raise serializers.ValidationError(
+                "This hall hasn't any seats with this location."
+            )
+
+        if seat.is_booked:
+            raise serializers.ValidationError("This seat is already booked.")
+
+        return data
+
     def create(self, validated_data):
         customer_data = validated_data.pop("customer")
-        movie_data = validated_data.pop("movie")
-        hall_data = validated_data.pop("hall")
-        seat_number_data = validated_data.pop("seat_number")
 
-        # Create or get customer, movie, hall
-        customer, _ = Customer.objects.get_or_create(**customer_data)
-        movie, _ = Movie.objects.get_or_create(**movie_data)
-        hall, _ = Hall.objects.get_or_create(**hall_data)
-
-        # Get or create seat
-        seat_number, _ = Seat.objects.get_or_create(
-            hall=hall,
-            row=seat_number_data["row"],
-            number=seat_number_data["number"],
-            defaults={"is_booked": False},
+        customer, created = Customer.objects.get_or_create(
+            name=customer_data.get("name"),
+            email=customer_data.get("email"),
+            phone=customer_data.get("phone"),
         )
 
+        validated_data["customer"] = customer
+
         # Mark the seat as booked
-        seat_number.is_booked = True
-        seat_number.save()
+        seat = validated_data["seat_number"]
+        seat.is_booked = True
+        seat.save()
 
         # Add them to validated_data for creating the ticket
-        validated_data["customer"] = customer
-        validated_data["movie"] = movie
-        validated_data["hall"] = hall
-        validated_data["seat_number"] = seat_number
-
         return super().create(validated_data)
-
-    def delete(self, validated_data):
-        customer_data = validated_data.pop("customer")
-        movie_data = validated_data.pop("movie")
-        hall_data = validated_data.pop("hall")
-        seat_number_data = validated_data.pop("seat_number")
-
-        # Create or get customer, movie, hall
-        customer, _ = Customer.objects.get_or_create(**customer_data)
-        movie, _ = Movie.objects.get_or_create(**movie_data)
-        hall, _ = Hall.objects.get_or_create(**hall_data)
-        seat_number, _ = Seat.objects.get_or_create(
-            hall=hall,
-            row=seat_number_data["row"],
-            number=seat_number_data["number"],
-            defaults={"is_booked": False},
-        )
-
-        # Mark the seat as booked
-        seat_number.is_booked = True
-        seat_number.save()
