@@ -13,9 +13,11 @@ urlpatterns = [
     path("halls/", views.hall_list_create),
     path("halls/<int:pk>", views.hall_update_delete),
     path("seats/", views.seat_list_create),
-    path('seats/<int:pk>', views.seat_update_delete),
+    path("seats/<int:pk>", views.seat_update_delete),
     path("tickets/", views.ticket_list_create),
     path("tickets/<int:pk>", views.ticket_update_delete),
     path("tickets/generics/", views.generics_tickets_list.as_view()),
     path("tickets/viewsets/", include(router.urls)),
+    path("api-auth", include("rest_framework.urls")),
+    path('api/logout/', views.logout_view, name='api-logout')
 ]

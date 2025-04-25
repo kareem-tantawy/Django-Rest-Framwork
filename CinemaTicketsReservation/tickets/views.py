@@ -1,7 +1,13 @@
 from django.shortcuts import render
-from rest_framework.decorators import api_view
+from rest_framework.decorators import (
+    api_view,
+    authentication_classes,
+    permission_classes,
+)
 from rest_framework.response import Response
 from rest_framework import status, generics, mixins, viewsets
+from rest_framework.permissions import IsAuthenticated
+from django.contrib.auth import logout
 from .models import Customer, Movie, Seat, Ticket, Hall
 from .serializers import (
     CustomerSerializer,
@@ -27,6 +33,7 @@ def customer_list_create(request):
 
 
 @api_view(["GET", "PUT", "DELETE"])
+@permission_classes([IsAuthenticated])
 def customer_update_delete(request, pk):
     try:
         customer = Customer.objects.get(pk=pk)
@@ -143,6 +150,7 @@ def seat_list_create(request):
 
 
 @api_view(["GET", "PUT", "DELETE"])
+@permission_classes([IsAuthenticated])
 def seat_update_delete(request, pk):
     try:
         seat = Seat.objects.get(pk=pk)
@@ -164,6 +172,7 @@ def seat_update_delete(request, pk):
 
 
 @api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
 def ticket_list_create(request):
     if request.method == "GET":
         tickets = Ticket.objects.all()
@@ -178,6 +187,7 @@ def ticket_list_create(request):
 
 
 @api_view(["GET", "PUT", "DELETE"])
+@permission_classes([IsAuthenticated])
 def ticket_update_delete(request, pk):
     try:
         ticket = Ticket.objects.get(pk=pk)
@@ -206,8 +216,17 @@ def ticket_update_delete(request, pk):
 class generics_tickets_list(generics.ListCreateAPIView):
     queryset = Ticket.objects.all()
     serializer_class = TicketSerializer
-
+    permission_classes = [IsAuthenticated]
 
 class viewsets_tickets(viewsets.ModelViewSet):
     queryset = Ticket.objects.all()
     serializer_class = TicketSerializer
+    permission_classes = [IsAuthenticated]
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def logout_view(request):
+    logout(request)
+    return Response({"message":"Successfull logged out"}, status=status.HTTP_200_OK)
+
